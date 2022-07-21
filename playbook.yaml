@@ -1,0 +1,81 @@
+- hosts: all
+  become: yes
+  gather_facts: false
+  tasks:
+  - name: Install docker packages
+    remote_user: ansible_ubuntu_demo
+    apt:
+      name: ['apt-transport-https','ca-certificates', 'curl', 'software-properties-common']
+      state: present
+      update_cache: yes
+    tags:
+      - docker
+  - name: Add Docker s GPG key for ubuntu from official site
+    remote_user: ansible_ubuntu_demo
+    apt_key:
+       url: https://download.docker.com/linux/ubuntu/gpg
+       state: present
+    tags:
+      - docker
+  - name: Verify gpg key with the fingerprint
+    remote_user: ansible_ubuntu_demo
+    apt_key:
+       id: 0EBFCD88
+       state: present
+    tags:
+      - docker
+  - name: Verify gpg key with the fingerprint
+    remote_user: ansible_ubuntu_demo
+    apt_key:
+      id: 0EBFCD88
+      state: present
+    tags:
+     - docker
+  - name: Configure Docker for ubuntu stable repository
+    remote_user: ansible_ubuntu_demo
+    apt_repository:
+       repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable
+       state: present
+       update_cache: yes
+    tags:
+     - docker
+  - name: Update apt packages
+    remote_user: ansible_ubuntu_demo
+    apt:
+      update_cache: yes
+    tags:
+      - docker
+  - name: Install docker-ce
+    remote_user: ansible_ubuntu_demo
+    apt:
+      name: docker-ce
+      state: present
+      update_cache: yes
+    tags:
+     - docker
+  - name: Add "ansible_ubuntu_demo" user to "docker" group
+    remote_user: ansible_ubuntu_demo
+    user:
+     name: "ansible_ubuntu_demo"
+     group: "docker"
+     append: yes
+    tags:
+     - docker
+  - name: Systemd service activation
+    systemd:
+       name: docker.service
+       enabled: yes
+       state: started
+  - name: Install docker-compose from official github repo
+    remote_user: ansible_ubuntu_demo
+    get_url:
+       url : https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+       dest: /usr/local/bin/docker-compose
+       mode: 'u+x,g+x'
+  - name: copy html file
+    copy: src=/home/bob/app dest=/home/bob/app remote_src=yes directory_mode=yes
+  - name: Run container
+    become: True
+    shell:
+      chdir: /home/bob/app
+      cmd: "docker-compose -f docker-compose.yml  up -d"
